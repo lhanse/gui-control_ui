@@ -13,7 +13,7 @@ class JointsExporter < Qt::Widget
 		impt_btn = Qt::PushButton.new("Import Joints Configuration")
 		impt_btn.connect(SIGNAL('clicked()')) do
 			file_dlg.setAcceptMode(Qt::FileDialog::AcceptOpen)
-			if file_dlg.exec then
+			if file_dlg.exec and file_dlg.result == Qt::Dialog::Accepted then
 				file_name = file_dlg.selectedFiles()[0]
 				if File.file?(file_name) then
 				    f = File.new(file_name,"r")
@@ -24,7 +24,7 @@ class JointsExporter < Qt::Widget
                     rescue IOError,Psych::SyntaxError,Typelib::UnknownConversionRequested => errName
                        puts "Import failed: " + errName.to_s
                     else
-                        ctrl_gui.setJointState(joint_sample)
+                        ctrl_gui.setReference(joint_sample)
                     end
                     f.close
                 end
@@ -36,14 +36,16 @@ class JointsExporter < Qt::Widget
 		expt_btn = Qt::PushButton.new("Export Joints Configuration")
 		expt_btn.connect(SIGNAL('clicked()')) do
 		    file_dlg.setAcceptMode(Qt::FileDialog::AcceptSave)
-			if file_dlg.exec then
+			if file_dlg.exec and file_dlg.result == Qt::Dialog::Accepted then
 				file_name = file_dlg.selectedFiles()[0]
-			
-				sample = ctrl_gui.getJoints()
-				exp_yaml = Orocos::TaskConfigurations.typelib_to_yaml_value(sample).to_yaml
-				f = File.new(file_name,"w")
-				f.write(exp_yaml)
-				f.close
+				
+				if not File.directory?(file_name) then
+					sample = ctrl_gui.getJoints()
+					exp_yaml = Orocos::TaskConfigurations.typelib_to_yaml_value(sample).to_yaml
+					f = File.new(file_name,"w")
+					f.write(exp_yaml)
+					f.close
+				end
 			end
 		end
 		
